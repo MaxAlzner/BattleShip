@@ -5,6 +5,7 @@ typedef struct BATTLESHIP_STATE
 {
 	uint size;
 	uint playerID;
+
 	struct
 	{
 		char a01, a02, a03, a04, a05, a06, a07, a08, a09, a10;
@@ -21,34 +22,35 @@ typedef struct BATTLESHIP_STATE
 	struct
 	{
 		uchar i0, i1, i2, i3, i4;
-		bool hit0, hit1, hit2, hit3, hit4;
-	} carrierIndices;
+		uchar hits;
+		bool destroyed;
+		bool placed;
+	} carrierInfo;
 	struct
 	{
 		uchar i0, i1, i2, i3;
-		bool hit0, hit1, hit2, hit3;
-	} battleshipIndices;
+		uchar hits;
+		bool destroyed;
+		bool placed;
+	} battleshipInfo;
 	struct
 	{
 		uchar i0, i1, i2;
-		bool hit0, hit1, hit2;
-	} cruiserIndices;
+		uchar hits;
+		bool destroyed;
+		bool placed;
+	} cruiserInfo;
 	struct
 	{
 		uchar i0, i1;
-		bool hit0, hit1, hit2, hit3, hit4;
-	} destroyer1Indices, destroyer2Indices;
+		uchar hits;
+		bool destroyed;
+		bool placed;
+	} destroyer1Info, destroyer2Info;
 	
 	uchar misslesTaken;
 	uchar hits;
 	uchar misses;
-	
-	bool allShipsPlaced;
-	bool carrierDestroyed;
-	bool battleshipDestroyed;
-	bool cruiserDestroyed;
-	bool destroyer1Destroyed;
-	bool destroyer2Destroyed;
 } BATTLESHIP_STATE;
 
 extern void ClearGame(BATTLESHIP_STATE* state);
@@ -76,10 +78,18 @@ extern bool IsCruiserHere(BATTLESHIP_STATE* state, uchar x, uchar y);
 extern bool IsDestroyer1Here(BATTLESHIP_STATE* state, uchar x, uchar y);
 extern bool IsDestroyer2Here(BATTLESHIP_STATE* state, uchar x, uchar y);
 
+extern void RegisterCarrierHit(BATTLESHIP_STATE* state);
+extern void RegisterBattleshipHit(BATTLESHIP_STATE* state);
+extern void RegisterCruiserHit(BATTLESHIP_STATE* state);
+extern void RegisterDestroyer1Hit(BATTLESHIP_STATE* state);
+extern void RegisterDestroyer2Hit(BATTLESHIP_STATE* state);
+
 extern bool IsHit(BATTLESHIP_STATE* state, uchar x, uchar y);
 
 extern bool AddMissle(BATTLESHIP_STATE* state, uchar x, uchar y);
 
+extern bool ParseCoordinate(char* buffer, uint size, uchar& x, uchar& y);
 extern void PrintGame(BATTLESHIP_STATE* client, BATTLESHIP_STATE* other);
+extern void PrintState(BATTLESHIP_STATE* state);
 
 #endif
