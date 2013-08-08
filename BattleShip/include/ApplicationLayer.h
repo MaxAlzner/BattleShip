@@ -21,14 +21,13 @@ enum GAME_STATE
 	STATE_INVALID_GAME         = 0x00030000, 
 };
 
-#define InputBufferSize 64
-
 extern BATTLESHIP_STATE local;
 extern BATTLESHIP_STATE other;
 extern GAME_STATE CurrentState;
 extern bool StillRunning;
 extern bool IsServer;
 
+#define InputBufferSize 64
 extern char InputBuffer[InputBufferSize];
 
 void PlaceShips();

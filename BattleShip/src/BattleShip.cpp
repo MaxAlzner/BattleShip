@@ -1,18 +1,26 @@
 #include "../include/main.h"
 
-#define BATTLESHIP_BLANK  ' '
-#define BATTLESHIP_SHIP   '#'
-#define BATTLESHIP_MISSLE 'X'
+#define BATTLESHIP_BLANK       ' '
+#define BATTLESHIP_SHIP        '#'
+#define BATTLESHIP_SHIP_SUNK   '='
+#define BATTLESHIP_MISSLE_HIT  'X'
+#define BATTLESHIP_MISSLE_MISS 'O'
 
 void ClearGame(BATTLESHIP_STATE* state)
 {
 	state->size = sizeof(BATTLESHIP_STATE);
 	state->playerID = 0;
+	state->gridLength = sizeof(char) * 100;
 
 	char* grid0 = (char*)&state->grid;
 	for (uint i = 0; i < 100; i++)
 	{
 		grid0[i] = BATTLESHIP_BLANK;
+	}
+	char* gridws0 = (char*)&state->gridWithoutShips;
+	for (uint i = 0; i < 100; i++)
+	{
+		gridws0[i] = BATTLESHIP_BLANK;
 	}
 
 	state->carrierInfo.hits = 0;
@@ -40,6 +48,7 @@ bool ValidGame(BATTLESHIP_STATE* state)
 	return 
 		state->size == sizeof(BATTLESHIP_STATE) && 
 		state->playerID != 0 && 
+		state->gridLength == sizeof(char) * 100 && 
 		state->misslesTaken == (state->hits + state->misses) && 
 		state->carrierInfo.i0 < 100 && 
 		state->carrierInfo.i1 < 100 && 
@@ -294,7 +303,7 @@ bool IsDestroyer1Here(BATTLESHIP_STATE* state, uchar x, uchar y)
 		state->destroyer1Info.i0 == index || 
 		state->destroyer1Info.i1 == index;
 }
-bool IsDestroyer21Here(BATTLESHIP_STATE* state, uchar x, uchar y)
+bool IsDestroyer2Here(BATTLESHIP_STATE* state, uchar x, uchar y)
 {
 	uchar index = (y * 10) + x;
 	return 
@@ -308,6 +317,19 @@ void RegisterCarrierHit(BATTLESHIP_STATE* state)
 	state->carrierInfo.hits++;
 	if (state->carrierInfo.hits >= 5)
 	{
+		char* grid0 = (char*)&state->grid;
+		char* gridws0 = (char*)&state->gridWithoutShips;
+		grid0[state->carrierInfo.i0] = BATTLESHIP_SHIP_SUNK;
+		grid0[state->carrierInfo.i1] = BATTLESHIP_SHIP_SUNK;
+		grid0[state->carrierInfo.i2] = BATTLESHIP_SHIP_SUNK;
+		grid0[state->carrierInfo.i3] = BATTLESHIP_SHIP_SUNK;
+		grid0[state->carrierInfo.i4] = BATTLESHIP_SHIP_SUNK;
+		gridws0[state->carrierInfo.i0] = BATTLESHIP_SHIP_SUNK;
+		gridws0[state->carrierInfo.i1] = BATTLESHIP_SHIP_SUNK;
+		gridws0[state->carrierInfo.i2] = BATTLESHIP_SHIP_SUNK;
+		gridws0[state->carrierInfo.i3] = BATTLESHIP_SHIP_SUNK;
+		gridws0[state->carrierInfo.i4] = BATTLESHIP_SHIP_SUNK;
+		
 		state->carrierInfo.destroyed = true;
 	}
 }
@@ -317,6 +339,17 @@ void RegisterBattleshipHit(BATTLESHIP_STATE* state)
 	state->battleshipInfo.hits++;
 	if (state->battleshipInfo.hits >= 4)
 	{
+		char* grid0 = (char*)&state->grid;
+		char* gridws0 = (char*)&state->gridWithoutShips;
+		grid0[state->battleshipInfo.i0] = BATTLESHIP_SHIP_SUNK;
+		grid0[state->battleshipInfo.i1] = BATTLESHIP_SHIP_SUNK;
+		grid0[state->battleshipInfo.i2] = BATTLESHIP_SHIP_SUNK;
+		grid0[state->battleshipInfo.i3] = BATTLESHIP_SHIP_SUNK;
+		gridws0[state->battleshipInfo.i0] = BATTLESHIP_SHIP_SUNK;
+		gridws0[state->battleshipInfo.i1] = BATTLESHIP_SHIP_SUNK;
+		gridws0[state->battleshipInfo.i2] = BATTLESHIP_SHIP_SUNK;
+		gridws0[state->battleshipInfo.i3] = BATTLESHIP_SHIP_SUNK;
+		
 		state->battleshipInfo.destroyed = true;
 	}
 }
@@ -326,6 +359,15 @@ void RegisterCruiserHit(BATTLESHIP_STATE* state)
 	state->cruiserInfo.hits++;
 	if (state->cruiserInfo.hits >= 3)
 	{
+		char* grid0 = (char*)&state->grid;
+		char* gridws0 = (char*)&state->gridWithoutShips;
+		grid0[state->cruiserInfo.i0] = BATTLESHIP_SHIP_SUNK;
+		grid0[state->cruiserInfo.i1] = BATTLESHIP_SHIP_SUNK;
+		grid0[state->cruiserInfo.i2] = BATTLESHIP_SHIP_SUNK;
+		gridws0[state->cruiserInfo.i0] = BATTLESHIP_SHIP_SUNK;
+		gridws0[state->cruiserInfo.i1] = BATTLESHIP_SHIP_SUNK;
+		gridws0[state->cruiserInfo.i2] = BATTLESHIP_SHIP_SUNK;
+		
 		state->cruiserInfo.destroyed = true;
 	}
 }
@@ -335,6 +377,13 @@ void RegisterDestroyer1Hit(BATTLESHIP_STATE* state)
 	state->destroyer1Info.hits++;
 	if (state->destroyer1Info.hits >= 2)
 	{
+		char* grid0 = (char*)&state->grid;
+		char* gridws0 = (char*)&state->gridWithoutShips;
+		grid0[state->destroyer1Info.i0] = BATTLESHIP_SHIP_SUNK;
+		grid0[state->destroyer1Info.i1] = BATTLESHIP_SHIP_SUNK;
+		gridws0[state->destroyer1Info.i0] = BATTLESHIP_SHIP_SUNK;
+		gridws0[state->destroyer1Info.i1] = BATTLESHIP_SHIP_SUNK;
+		
 		state->destroyer1Info.destroyed = true;
 	}
 }
@@ -344,31 +393,53 @@ void RegisterDestroyer2Hit(BATTLESHIP_STATE* state)
 	state->destroyer2Info.hits++;
 	if (state->destroyer2Info.hits >= 2)
 	{
+		char* grid0 = (char*)&state->grid;
+		char* gridws0 = (char*)&state->gridWithoutShips;
+		grid0[state->destroyer2Info.i0] = BATTLESHIP_SHIP_SUNK;
+		grid0[state->destroyer2Info.i1] = BATTLESHIP_SHIP_SUNK;
+		gridws0[state->destroyer2Info.i0] = BATTLESHIP_SHIP_SUNK;
+		gridws0[state->destroyer2Info.i1] = BATTLESHIP_SHIP_SUNK;
+		
 		state->destroyer2Info.destroyed = true;
 	}
 }
 
-bool IsHit(BATTLESHIP_STATE* state, uchar x, uchar y)
+bool ValidTarget(BATTLESHIP_STATE* state, uchar x, uchar y)
 {
-	char* grid0 = (char*)&state->grid;
+	char* gridws0 = (char*)&state->gridWithoutShips;
 	uchar index = (y * 10) + x;
-	if (grid0[index] == BATTLESHIP_MISSLE) return true;
-	return false;
+	if (gridws0[index] == BATTLESHIP_MISSLE_HIT || gridws0[index] == BATTLESHIP_MISSLE_MISS) return false;
+	return true;
 }
 
 bool AddMissle(BATTLESHIP_STATE* state, uchar x, uchar y)
 {
 	char* grid0 = (char*)&state->grid;
+	char* gridws0 = (char*)&state->gridWithoutShips;
 	bool hit = false;
 	uchar index = (y * 10) + x;
-	if (grid0[index] == BATTLESHIP_SHIP)
+	if (grid0[index] == BATTLESHIP_SHIP || grid0[index] == BATTLESHIP_MISSLE_HIT || grid0[index] == BATTLESHIP_SHIP_SUNK)
 	{
 		state->hits++;
-		// check which ship is hit
 		hit = true;
 	}
 	else state->misses++;
-	grid0[index] = BATTLESHIP_MISSLE;
+	if (hit)
+	{
+		grid0[index] = BATTLESHIP_MISSLE_HIT;
+		gridws0[index] = BATTLESHIP_MISSLE_HIT;
+		
+		if (IsCarrierHere(state, x, y)) RegisterCarrierHit(state);
+		else if (IsBattleshipHere(state, x, y)) RegisterBattleshipHit(state);
+		else if (IsCruiserHere(state, x, y)) RegisterCruiserHit(state);
+		else if (IsDestroyer1Here(state, x, y)) RegisterDestroyer1Hit(state);
+		else if (IsDestroyer2Here(state, x, y)) RegisterDestroyer2Hit(state);
+	}
+	else
+	{
+		grid0[index] = BATTLESHIP_MISSLE_MISS;
+		gridws0[index] = BATTLESHIP_MISSLE_MISS;
+	}
 	return hit;
 }
 
@@ -413,53 +484,53 @@ void PrintGame(BATTLESHIP_STATE* state1, BATTLESHIP_STATE* state2)
 	printf(" A%c%c%c%c%c%c%c%c%c%c  A%c%c%c%c%c%c%c%c%c%c\n", 
 		state1->grid.a01, state1->grid.a02, state1->grid.a03, state1->grid.a04, state1->grid.a05, 
 		state1->grid.a06, state1->grid.a07, state1->grid.a08, state1->grid.a09, state1->grid.a10, 
-		state2->grid.a01, state2->grid.a02, state2->grid.a03, state2->grid.a04, state2->grid.a05, 
-		state2->grid.a06, state2->grid.a07, state2->grid.a08, state2->grid.a09, state2->grid.a10);
+		state2->gridWithoutShips.a01, state2->gridWithoutShips.a02, state2->gridWithoutShips.a03, state2->gridWithoutShips.a04, state2->gridWithoutShips.a05, 
+		state2->gridWithoutShips.a06, state2->gridWithoutShips.a07, state2->gridWithoutShips.a08, state2->gridWithoutShips.a09, state2->gridWithoutShips.a10);
 	printf(" B%c%c%c%c%c%c%c%c%c%c  B%c%c%c%c%c%c%c%c%c%c\n", 
 		state1->grid.b01, state1->grid.b02, state1->grid.b03, state1->grid.b04, state1->grid.b05, 
 		state1->grid.b06, state1->grid.b07, state1->grid.b08, state1->grid.b09, state1->grid.b10, 
-		state2->grid.b01, state2->grid.b02, state2->grid.b03, state2->grid.b04, state2->grid.b05, 
-		state2->grid.b06, state2->grid.b07, state2->grid.b08, state2->grid.b09, state2->grid.b10);
+		state2->gridWithoutShips.b01, state2->gridWithoutShips.b02, state2->gridWithoutShips.b03, state2->gridWithoutShips.b04, state2->gridWithoutShips.b05, 
+		state2->gridWithoutShips.b06, state2->gridWithoutShips.b07, state2->gridWithoutShips.b08, state2->gridWithoutShips.b09, state2->gridWithoutShips.b10);
 	printf(" C%c%c%c%c%c%c%c%c%c%c  C%c%c%c%c%c%c%c%c%c%c\n", 
 		state1->grid.c01, state1->grid.c02, state1->grid.c03, state1->grid.c04, state1->grid.c05, 
 		state1->grid.c06, state1->grid.c07, state1->grid.c08, state1->grid.c09, state1->grid.c10, 
-		state2->grid.c01, state2->grid.c02, state2->grid.c03, state2->grid.c04, state2->grid.c05, 
-		state2->grid.c06, state2->grid.c07, state2->grid.c08, state2->grid.c09, state2->grid.c10);
+		state2->gridWithoutShips.c01, state2->gridWithoutShips.c02, state2->gridWithoutShips.c03, state2->gridWithoutShips.c04, state2->gridWithoutShips.c05, 
+		state2->gridWithoutShips.c06, state2->gridWithoutShips.c07, state2->gridWithoutShips.c08, state2->gridWithoutShips.c09, state2->gridWithoutShips.c10);
 	printf(" D%c%c%c%c%c%c%c%c%c%c  D%c%c%c%c%c%c%c%c%c%c\n", 
 		state1->grid.d01, state1->grid.d02, state1->grid.d03, state1->grid.d04, state1->grid.d05, 
 		state1->grid.d06, state1->grid.d07, state1->grid.d08, state1->grid.d09, state1->grid.d10, 
-		state2->grid.d01, state2->grid.d02, state2->grid.d03, state2->grid.d04, state2->grid.d05, 
-		state2->grid.d06, state2->grid.d07, state2->grid.d08, state2->grid.d09, state2->grid.d10);
+		state2->gridWithoutShips.d01, state2->gridWithoutShips.d02, state2->gridWithoutShips.d03, state2->gridWithoutShips.d04, state2->gridWithoutShips.d05, 
+		state2->gridWithoutShips.d06, state2->gridWithoutShips.d07, state2->gridWithoutShips.d08, state2->gridWithoutShips.d09, state2->gridWithoutShips.d10);
 	printf(" E%c%c%c%c%c%c%c%c%c%c  E%c%c%c%c%c%c%c%c%c%c\n", 
 		state1->grid.e01, state1->grid.e02, state1->grid.e03, state1->grid.e04, state1->grid.e05, 
 		state1->grid.e06, state1->grid.e07, state1->grid.e08, state1->grid.e09, state1->grid.e10, 
-		state2->grid.e01, state2->grid.e02, state2->grid.e03, state2->grid.e04, state2->grid.e05, 
-		state2->grid.e06, state2->grid.e07, state2->grid.e08, state2->grid.e09, state2->grid.e10);
+		state2->gridWithoutShips.e01, state2->gridWithoutShips.e02, state2->gridWithoutShips.e03, state2->gridWithoutShips.e04, state2->gridWithoutShips.e05, 
+		state2->gridWithoutShips.e06, state2->gridWithoutShips.e07, state2->gridWithoutShips.e08, state2->gridWithoutShips.e09, state2->gridWithoutShips.e10);
 	printf(" F%c%c%c%c%c%c%c%c%c%c  F%c%c%c%c%c%c%c%c%c%c\n", 
 		state1->grid.f01, state1->grid.f02, state1->grid.f03, state1->grid.f04, state1->grid.f05, 
 		state1->grid.f06, state1->grid.f07, state1->grid.f08, state1->grid.f09, state1->grid.f10, 
-		state2->grid.f01, state2->grid.f02, state2->grid.f03, state2->grid.f04, state2->grid.f05, 
-		state2->grid.f06, state2->grid.f07, state2->grid.f08, state2->grid.f09, state2->grid.f10);
+		state2->gridWithoutShips.f01, state2->gridWithoutShips.f02, state2->gridWithoutShips.f03, state2->gridWithoutShips.f04, state2->gridWithoutShips.f05, 
+		state2->gridWithoutShips.f06, state2->gridWithoutShips.f07, state2->gridWithoutShips.f08, state2->gridWithoutShips.f09, state2->gridWithoutShips.f10);
 	printf(" G%c%c%c%c%c%c%c%c%c%c  G%c%c%c%c%c%c%c%c%c%c\n", 
 		state1->grid.g01, state1->grid.g02, state1->grid.g03, state1->grid.g04, state1->grid.g05, 
 		state1->grid.g06, state1->grid.g07, state1->grid.g08, state1->grid.g09, state1->grid.g10, 
-		state2->grid.g01, state2->grid.g02, state2->grid.g03, state2->grid.g04, state2->grid.g05, 
-		state2->grid.g06, state2->grid.g07, state2->grid.g08, state2->grid.g09, state2->grid.g10);
+		state2->gridWithoutShips.g01, state2->gridWithoutShips.g02, state2->gridWithoutShips.g03, state2->gridWithoutShips.g04, state2->gridWithoutShips.g05, 
+		state2->gridWithoutShips.g06, state2->gridWithoutShips.g07, state2->gridWithoutShips.g08, state2->gridWithoutShips.g09, state2->gridWithoutShips.g10);
 	printf(" H%c%c%c%c%c%c%c%c%c%c  H%c%c%c%c%c%c%c%c%c%c\n", 
 		state1->grid.h01, state1->grid.h02, state1->grid.h03, state1->grid.h04, state1->grid.h05, 
 		state1->grid.h06, state1->grid.h07, state1->grid.h08, state1->grid.h09, state1->grid.h10, 
-		state2->grid.h01, state2->grid.h02, state2->grid.h03, state2->grid.h04, state2->grid.h05, 
-		state2->grid.h06, state2->grid.h07, state2->grid.h08, state2->grid.h09, state2->grid.h10);
+		state2->gridWithoutShips.h01, state2->gridWithoutShips.h02, state2->gridWithoutShips.h03, state2->gridWithoutShips.h04, state2->gridWithoutShips.h05, 
+		state2->gridWithoutShips.h06, state2->gridWithoutShips.h07, state2->gridWithoutShips.h08, state2->gridWithoutShips.h09, state2->gridWithoutShips.h10);
 	printf(" I%c%c%c%c%c%c%c%c%c%c  I%c%c%c%c%c%c%c%c%c%c\n", 
 		state1->grid.i01, state1->grid.i02, state1->grid.i03, state1->grid.i04, state1->grid.i05, 
 		state1->grid.i06, state1->grid.i07, state1->grid.i08, state1->grid.i09, state1->grid.i10, 
-		state2->grid.i01, state2->grid.i02, state2->grid.i03, state2->grid.i04, state2->grid.i05, 
-		state2->grid.i06, state2->grid.i07, state2->grid.i08, state2->grid.i09, state2->grid.i10);
+		state2->gridWithoutShips.i01, state2->gridWithoutShips.i02, state2->gridWithoutShips.i03, state2->gridWithoutShips.i04, state2->gridWithoutShips.i05, 
+		state2->gridWithoutShips.i06, state2->gridWithoutShips.i07, state2->gridWithoutShips.i08, state2->gridWithoutShips.i09, state2->gridWithoutShips.i10);
 	printf(" J%c%c%c%c%c%c%c%c%c%c  J%c%c%c%c%c%c%c%c%c%c\n", 
 		state1->grid.j01, state1->grid.j02, state1->grid.j03, state1->grid.j04, state1->grid.j05, 
 		state1->grid.j06, state1->grid.j07, state1->grid.j08, state1->grid.j09, state1->grid.j10, 
-		state2->grid.j01, state2->grid.j02, state2->grid.j03, state2->grid.j04, state2->grid.j05, 
-		state2->grid.j06, state2->grid.j07, state2->grid.j08, state2->grid.j09, state2->grid.j10);
+		state2->gridWithoutShips.j01, state2->gridWithoutShips.j02, state2->gridWithoutShips.j03, state2->gridWithoutShips.j04, state2->gridWithoutShips.j05, 
+		state2->gridWithoutShips.j06, state2->gridWithoutShips.j07, state2->gridWithoutShips.j08, state2->gridWithoutShips.j09, state2->gridWithoutShips.j10);
 }
 void PrintState(BATTLESHIP_STATE* state)
 {

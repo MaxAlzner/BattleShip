@@ -5,6 +5,7 @@ typedef struct BATTLESHIP_STATE
 {
 	uint size;
 	uint playerID;
+	uint gridLength;
 
 	struct
 	{
@@ -19,6 +20,19 @@ typedef struct BATTLESHIP_STATE
 		char i01, i02, i03, i04, i05, i06, i07, i08, i09, i10;
 		char j01, j02, j03, j04, j05, j06, j07, j08, j09, j10;
 	} grid;
+	struct
+	{
+		char a01, a02, a03, a04, a05, a06, a07, a08, a09, a10;
+		char b01, b02, b03, b04, b05, b06, b07, b08, b09, b10;
+		char c01, c02, c03, c04, c05, c06, c07, c08, c09, c10;
+		char d01, d02, d03, d04, d05, d06, d07, d08, d09, d10;
+		char e01, e02, e03, e04, e05, e06, e07, e08, e09, e10;
+		char f01, f02, f03, f04, f05, f06, f07, f08, f09, f10;
+		char g01, g02, g03, g04, g05, g06, g07, g08, g09, g10;
+		char h01, h02, h03, h04, h05, h06, h07, h08, h09, h10;
+		char i01, i02, i03, i04, i05, i06, i07, i08, i09, i10;
+		char j01, j02, j03, j04, j05, j06, j07, j08, j09, j10;
+	} gridWithoutShips;
 	struct
 	{
 		uchar i0, i1, i2, i3, i4;
@@ -84,7 +98,7 @@ extern void RegisterCruiserHit(BATTLESHIP_STATE* state);
 extern void RegisterDestroyer1Hit(BATTLESHIP_STATE* state);
 extern void RegisterDestroyer2Hit(BATTLESHIP_STATE* state);
 
-extern bool IsHit(BATTLESHIP_STATE* state, uchar x, uchar y);
+extern bool ValidTarget(BATTLESHIP_STATE* state, uchar x, uchar y);
 
 extern bool AddMissle(BATTLESHIP_STATE* state, uchar x, uchar y);
 

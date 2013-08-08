@@ -12,7 +12,16 @@ bool WonGame = false;
 char* ServerIP = 0;
 uint ServerPort = 20533;
 
+static char* HitMessage = "That was a hit";
+static char* MissMessage = "That was a miss";
+static char* LoseMessage = "All my ships have been destroyed";
+
 char InputBuffer[InputBufferSize];
+
+void ClearInputBuffer()
+{
+	memset(InputBuffer, 0, InputBufferSize * sizeof(char));
+}
 
 void PlaceShips()
 {
@@ -29,12 +38,20 @@ void PlaceShips()
 	fflush(stdin);
 	scanf("%s", InputBuffer);
 	bool result = ParseCoordinate(InputBuffer, InputBufferSize, x, y);
-	printf("  Flip? (y/n) : ");
+	printf("  Vertical? (y/n) : ");
 	char answer;
 	fflush(stdin);
 	scanf("%c", &answer);
 	fflush(stdin);
 	if (answer == 'y' || answer == 'Y') flip = true;
+	
+	if (!result)
+	{
+		printf("\n");
+		printf("  Incorrect Coordinate\n");
+		_getch();
+		return;
+	}
 
 	if (!local.carrierInfo.placed)
 	{
@@ -75,14 +92,6 @@ void PlaceShips()
 			PlaceDestroyer2(&local, x, y, flip);
 		}
 		else result = false;
-	}
-	
-	if (!result)
-	{
-		printf("\n");
-		printf("  Incorrect Coordinate\n");
-		_getch();
-		return;
 	}
 
 	if (local.carrierInfo.placed && local.battleshipInfo.placed && local.cruiserInfo.placed && local.destroyer1Info.placed && local.destroyer2Info.placed)
@@ -171,7 +180,7 @@ void FindServer()
 	fflush(stdin);
 	printf("\n");
 	
-	if (!MALib::SOCK_ConnectTo(ServerPort, InputBuffer))
+	if (!MALib::SOCK_ConnectTo(port, InputBuffer))
 	{
 		printf("  Failed to connect to server\n");
 		StillRunning = false;
@@ -184,13 +193,13 @@ void FindServer()
 }
 void WaitForServer()
 {
-	printf("\n");
-	printf("  Waiting for opponent...\n");
-	printf("\n");
+	//printf("\n");
+	//printf("  Waiting for opponent...\n");
+	//printf("\n");
 
 	CurrentState = STATE_EXCHANGE_MOVES;
 
-	_getch();
+	//_getch();
 }
 
 void ExchangeMoves()
@@ -203,14 +212,55 @@ void ExchangeMoves()
 	scanf("%s", InputBuffer);
 	fflush(stdin);
 	printf("\n");
-	if (!ParseCoordinate(InputBuffer, InputBufferSize, x, y))
+	if (!ParseCoordinate(InputBuffer, InputBufferSize, x, y) || !ValidTarget(&other, x, y))
 	{
 		printf("  Incorrect Coordinate\n");
 		_getch();
 		return;
 	}
 
-	CurrentState = STATE_LEAVING_GAME;
+	printf("  Sending Coordinate\n");
+	MALib::SOCK_Send(InputBuffer, InputBufferSize);
+	ClearInputBuffer();
+	MALib::SOCK_Receive(InputBuffer, InputBufferSize);
+	printf("  Recieved Coordinate : %s\n", InputBuffer);
+
+	uchar ox, oy = 0;
+	if (!ParseCoordinate(InputBuffer, InputBufferSize, ox, oy))
+	{
+		printf("  Recieved Invalid Coordinate\n");
+		_getch();
+		return;
+	}
+
+	bool wasHit = AddMissle(&local, ox, oy);
+
+	char* localField = (char*)&(local.gridWithoutShips);
+	char* otherField = (char*)&(other.gridWithoutShips);
+	MALib::SOCK_Send(localField, local.gridLength);
+	MALib::SOCK_Receive(otherField, other.gridLength);
+
+	if (local.carrierInfo.destroyed && local.battleshipInfo.destroyed && local.cruiserInfo.destroyed && local.destroyer1Info.destroyed && local.destroyer2Info.destroyed)
+	{
+		MALib::SOCK_Send(LoseMessage, strlen(LoseMessage));
+		CurrentState = STATE_LEAVING_GAME;
+	}
+	else
+	{
+		if (wasHit) MALib::SOCK_Send(HitMessage, strlen(HitMessage));
+		else MALib::SOCK_Send(MissMessage, strlen(MissMessage));
+	}
+	
+	ClearInputBuffer();
+	MALib::SOCK_Receive(InputBuffer, InputBufferSize);
+	printf("  %s\n", InputBuffer);
+
+	if (strcmp(LoseMessage, InputBuffer) == 0)
+	{
+		CurrentState = STATE_WIN_SCREEN;
+	}
+
+	_getch();
 }
 void LeavingGame()
 {
