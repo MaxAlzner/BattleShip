@@ -7,6 +7,10 @@ BATTLESHIP_STATE other;
 GAME_STATE CurrentState = STATE_NONE;
 bool StillRunning = true;
 bool IsServer = false;
+bool WonGame = false;
+
+char* ServerIP = 0;
+uint ServerPort = 20533;
 
 char InputBuffer[InputBufferSize];
 
@@ -29,6 +33,7 @@ void PlaceShips()
 	char answer;
 	fflush(stdin);
 	scanf("%c", &answer);
+	fflush(stdin);
 	if (answer == 'y' || answer == 'Y') flip = true;
 
 	if (!local.carrierInfo.placed)
@@ -96,6 +101,7 @@ void ChoosePlayMode()
 	int option = -1;
 	fflush(stdin);
 	scanf("%d", &option);
+	fflush(stdin);
 
 	switch (option)
 	{
@@ -117,39 +123,42 @@ void ChoosePlayMode()
 
 void CreateServer()
 {
-	printf("\n");
-	printf("  Connecting to server\n");
-	printf("\n");
+	MALib::SOCK_Initialize(true);
 
-	char* ip = new char[64];
-
-	if (!MALib::HostConnection(20533, &ip))
+	if (!MALib::SOCK_HostConnection(20533, &ServerIP))
 	{
+		printf("\n");
 		printf("  Failed to start server\n");
 		StillRunning = false;
+		_getch();
 	}
 	else
 	{
-		printf("  IP ADDRESS : %s\n", ip);
-		printf("  PORT : %d\n", 20533);
+		CurrentState = STATE_WAIT_FOR_CLIENT;
 	}
-
-	_getch();
-
-	delete [] ip;
 }
 void WaitForClient()
 {
 	printf("\n");
 	printf("  Waiting for opponent...\n");
 	printf("\n");
-	_getch();
+	printf("  IP ADDRESS : %s\n", ServerIP);
+	printf("  PORT : %d\n", ServerPort);
+	printf("\n");
+	
+	if (MALib::SOCK_AcceptConnection())
+	{
+		printf("  Found client\n");
+		CurrentState = STATE_EXCHANGE_MOVES;
+		_getch();
+	}
 }
 
 void FindServer()
 {
+	MALib::SOCK_Initialize(false);
 	printf("\n");
-	printf("  Connecting to client\n");
+	printf("  Connecting to server\n");
 	printf("\n");
 	
 	int port = 0;
@@ -159,33 +168,57 @@ void FindServer()
 	printf("  PORT : ");
 	fflush(stdin);
 	scanf("%d", &port);
+	fflush(stdin);
 	printf("\n");
 	
-	if (!MALib::ConnectTo(20533, InputBuffer))
+	if (!MALib::SOCK_ConnectTo(ServerPort, InputBuffer))
 	{
 		printf("  Failed to connect to server\n");
 		StillRunning = false;
+		_getch();
 	}
 	else
 	{
-		printf("  Successfully connected to server\n");
+		CurrentState = STATE_WAIT_FOR_SERVER;
 	}
-
-	_getch();
 }
 void WaitForServer()
 {
 	printf("\n");
 	printf("  Waiting for opponent...\n");
 	printf("\n");
+
+	CurrentState = STATE_EXCHANGE_MOVES;
+
 	_getch();
 }
 
-void SendMove()
+void ExchangeMoves()
 {
+	PrintGame(&local, &other);
+	printf("  Enter Coordinate : ");
+	uchar x, y = 0;
+
+	fflush(stdin);
+	scanf("%s", InputBuffer);
+	fflush(stdin);
+	printf("\n");
+	if (!ParseCoordinate(InputBuffer, InputBufferSize, x, y))
+	{
+		printf("  Incorrect Coordinate\n");
+		_getch();
+		return;
+	}
+
+	CurrentState = STATE_LEAVING_GAME;
 }
-void WaitingForMove()
+void LeavingGame()
 {
+	if (IsServer) MALib::SOCK_CloseConnection();
+	MALib::SOCK_Uninitialize();
+
+	if (WonGame) CurrentState = STATE_WIN_SCREEN;
+	else CurrentState = STATE_LOSE_SCREEN;
 }
 
 void WinScreen()
@@ -193,6 +226,7 @@ void WinScreen()
 	printf("\n");
 	printf("  You won the game\n");
 	printf("\n");
+	StillRunning = false;
 	_getch();
 }
 void LoseScreen()
@@ -200,6 +234,7 @@ void LoseScreen()
 	printf("\n");
 	printf("  You lost the game\n");
 	printf("\n");
+	StillRunning = false;
 	_getch();
 }
 void InvalidGame()
@@ -207,6 +242,7 @@ void InvalidGame()
 	printf("\n");
 	printf("  Invalid game\n");
 	printf("\n");
+	StillRunning = false;
 	_getch();
 }
 

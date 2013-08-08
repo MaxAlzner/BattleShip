@@ -3,7 +3,6 @@
 
 int main()
 {
-	MALib::InitializeSock();
 	ClearGame(&local);
 	ClearGame(&other);
 	CurrentState = STATE_PLACE_SHIPS;
@@ -34,11 +33,11 @@ int main()
 			WaitForServer();
 			break;
 
-		case STATE_SENDING_MOVE:
-			SendMove();
+		case STATE_EXCHANGE_MOVES:
+			ExchangeMoves();
 			break;
-		case STATE_WAITING_FOR_MOVE:
-			WaitingForMove();
+		case STATE_LEAVING_GAME:
+			LeavingGame();
 			break;
 
 		case STATE_WIN_SCREEN:
@@ -57,6 +56,5 @@ int main()
 		}
 	}
 
-	MALib::UninitializeSock();
 	return 0;
 }
